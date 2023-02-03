@@ -1,0 +1,121 @@
+@use 'sass:math';
+@use '../base/setting';
+@use '../utils/breakpoint';
+
+@mixin make-col-auto() {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+@mixin make-row-cols($infix) {
+  @if setting.$grid-row-columns > 0 {
+    @for $size from 1 through setting.$grid-row-columns {
+      .row-cols#{$infix}-#{$size} {
+        > * {
+          flex: 0 0 auto;
+          width: math.div(100%, $size);
+        }
+      }
+    }
+  }
+}
+
+@mixin make-offset($infix, $columns: setting.$grid-columns) {
+  // `$columns - 1` 因為不可能偏移整行的寬度
+  @for $size from 0 through ($columns - 1) {
+    // 避免產生沒用的 .offset-0
+    @if not($infix == '' and $size == 0) {
+      .offset#{$infix}-#{$size} {
+        $num: math.div($size, $columns);
+        margin-left: if($num == 0, 0, math.percentage($num));
+      }
+    }
+  }
+}
+
+@mixin make-gutters($infix) {
+  @each $key, $value in setting.$gutters {
+    .g#{$infix}-#{$key},
+    .gx#{$infix}-#{$key} {
+      --#{setting.$variable-prefix}gutter-x: #{$value};
+    }
+
+    .g#{$infix}-#{$key},
+    .gy#{$infix}-#{$key} {
+      --#{setting.$variable-prefix}gutter-y: #{$value};
+    }
+  }
+}
+
+// ref: https://github.com/twbs/bootstrap/blob/main/scss/mixins/_grid.scss
+@mixin make-columns(
+  $columns: setting.$grid-columns,
+  $breakpoints: breakpoint.$breakpoints
+) {
+  @each $breakpoint in map-keys($breakpoints) {
+    $infix: breakpoint.infix($breakpoint);
+
+    @include breakpoint.media($breakpoint) {
+      .col#{$infix} {
+        flex: 1 0 0%;
+      }
+
+      @if setting.$enable-row-cols-auto-classes {
+        .row-cols#{$infix}-auto > * {
+          @include make-col-auto();
+        }
+      }
+
+      @if setting.$enable-row-cols-classes {
+        @include make-row-cols($infix);
+      }
+
+      @if setting.$enable-col-auto-classes {
+        .col#{$infix}-auto {
+          @include make-col-auto();
+        }
+      }
+
+      @if $columns > 0 {
+        @for $size from 1 through $columns {
+          .col#{$infix}-#{$size} {
+            flex: 0 0 auto;
+            width: math.percentage(math.div($size, $columns));
+          }
+        }
+
+        @if setting.$enable-offset-classes {
+          @include make-offset($infix);
+        }
+      }
+
+      @include make-gutters($infix);
+    }
+  }
+}
+
+@mixin make-row() {
+  --#{setting.$variable-prefix}gutter-x: #{setting.$gutter-width};
+  --#{setting.$variable-prefix}gutter-y: #{setting.$gutter-width};
+
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: calc(var(--#{setting.$variable-prefix}gutter-y) * -1);
+  margin-left: calc(var(--#{setting.$variable-prefix}gutter-x) * -1);
+
+  > * {
+    width: 100%;
+    max-width: 100%;
+    padding-top: var(--#{setting.$variable-prefix}gutter-y);
+    padding-left: var(--#{setting.$variable-prefix}gutter-x);
+
+    flex-shrink: 0;
+  }
+}
+
+@if setting.$enable-grid-system-classes {
+  .row {
+    @include make-row();
+  }
+  @include make-columns();
+}

@@ -1,0 +1,52 @@
+@use '../base/setting';
+@use '../utils/breakpoint';
+
+@mixin make-container() {
+  width: 100%;
+  padding-right: setting.$container-padding-x;
+  padding-left: setting.$container-padding-x;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+// ref: https://github.com/twbs/bootstrap/blob/main/scss/mixins/_container.scss
+@mixin make-container-max-widths() {
+  @each $breakpoint, $container-max-width in setting.$container-max-widths {
+    @include breakpoint.media($breakpoint) {
+      max-width: $container-max-width;
+    }
+  }
+}
+
+// 具有每個斷點的 max-width 的 container
+.container {
+  @include make-container();
+  // 不同裝置斷點的最大寬度
+  @include make-container-max-widths();
+}
+
+// container 在所以斷點的寬度都為 100%
+.container-fluid {
+  @include make-container();
+}
+
+// container 的寬度為 100%，至斷點為止
+@each $breakpoint, $container-max-width in setting.$container-max-widths {
+  .container#{breakpoint.infix($breakpoint)} {
+    @extend .container-fluid;
+  }
+
+  @include breakpoint.media($breakpoint) {
+    %responsive-container-#{$breakpoint} {
+      max-width: $container-max-width;
+    }
+
+    @each $name, $width in breakpoint.$breakpoints {
+      @if ($container-max-width > $width or $breakpoint == $name) {
+        .container#{breakpoint.infix($name)} {
+          @extend %responsive-container-#{$breakpoint};
+        }
+      }
+    }
+  }
+}

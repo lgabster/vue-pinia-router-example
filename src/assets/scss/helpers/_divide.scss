@@ -1,0 +1,44 @@
+@use '../base/color';
+@use '../base/setting';
+
+// ====================================
+// divide
+
+.divide-x > :not([hidden]) ~ :not([hidden]) {
+  position: relative;
+
+  &::before {
+    content: '';
+    width: 1px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--#{setting.$variable-prefix}space) * -1 / 2);
+    background-color: color.$black-25;
+  }
+}
+
+.divide-y > :not([hidden]) ~ :not([hidden]) {
+  position: relative;
+
+  &::before {
+    content: '';
+    height: 1px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--#{setting.$variable-prefix}space) * -1 / 2);
+    background-color: color.$black-25;
+  }
+}
+
+// ====================================
+// vertical rule
+
+.vr {
+  display: inline-block;
+  align-self: stretch;
+  width: 1px;
+  min-height: 1em;
+  background-color: color.$black-25;
+}

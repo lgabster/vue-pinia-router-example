@@ -1,0 +1,37 @@
+@use '../utils/breakpoint';
+
+// ====================================
+// # single-line truncation
+
+// `display` 必須為 `block` 或 `inline-block`
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ====================================
+// # multi-line truncation
+
+$max-line-clamp: 5;
+
+@each $breakpoint in map-keys(breakpoint.$breakpoints) {
+  $infix: breakpoint.infix($breakpoint);
+
+  @if $max-line-clamp > 0 {
+    @include breakpoint.media($breakpoint) {
+      @for $n from 1 through $max-line-clamp {
+        .line-clamp#{$infix}-#{$n} {
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: $n;
+        }
+      }
+    }
+  }
+}
+
+.line-clamp-none {
+  -webkit-line-clamp: unset;
+}

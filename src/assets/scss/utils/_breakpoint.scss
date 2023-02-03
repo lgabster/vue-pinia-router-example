@@ -1,0 +1,23 @@
+$breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px
+);
+
+@mixin media($name) {
+  $width: map-get($breakpoints, $name);
+  @if $width == 0 {
+    @content;
+  } @else {
+    @media (min-width: $width) {
+      @content;
+    }
+  }
+}
+
+@function infix($name) {
+  $width: map-get($breakpoints, $name);
+  @return if($width == 0, '', '-#{$name}');
+}

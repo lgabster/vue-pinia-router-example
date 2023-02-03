@@ -1,0 +1,39 @@
+@use 'spacing';
+@forward 'spacing';
+@forward 'utilities';
+
+// `:root` CSS 變數的前綴
+$variable-prefix: x-;
+
+// ====================================
+// # z-index
+
+$z-index-stretched-link: 1;
+// $z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+
+// ====================================
+// # grid
+
+$grid-columns: 12;
+$grid-row-columns: 6;
+$gutter-width: 1rem;
+$gutters: spacing.$spacers;
+
+$enable-grid-system-classes: false;
+$enable-row-cols-auto-classes: false;
+$enable-row-cols-classes: false;
+$enable-col-auto-classes: false;
+$enable-offset-classes: false;
+
+// ====================================
+// # container
+
+$container-padding-x: $gutter-width;
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px
+);

@@ -1,0 +1,131 @@
+@use 'base/setting';
+@use 'utils/breakpoint';
+
+@function useImportant() {
+  @return if(setting.$enable-important-utilities, !important, null);
+}
+
+// ref: https://github.com/twbs/bootstrap/blob/main/scss/mixins/_utilities.scss
+@mixin generate-utility($utility, $infix) {
+  $values: map-get($utility, values);
+
+  // 如果值是 list 或 string，就轉成 map
+  @if type-of($values) == 'string' or type-of(nth($values, 1)) != 'list' {
+    $values: zip($values, $values);
+  }
+
+  @each $key, $value in $values {
+    $properties: map-get($utility, property);
+
+    // 可能是多種 properties，例如：垂直或水平 margins 或 paddings
+    @if type-of($properties) == 'string' {
+      $properties: append((), $properties);
+    }
+
+    // 使用自定 class 或多種 properties 中的第一個 property
+    $property-class: if(
+      map-has-key($utility, class),
+      map-get($utility, class),
+      nth($properties, 1)
+    );
+    $property-class: if($property-class == null, '', $property-class);
+
+    // 生成 pseudo-class 的狀態參數，例如：`hover`
+    $state: if(map-has-key($utility, state), map-get($utility, state), ());
+
+    // 前綴是 斷點 或 空字串
+    $infix: if(
+      $property-class == '' and str-slice($infix, 1, 1) == '-',
+      str-slice($infix, 2),
+      $infix
+    );
+
+    // 如果 value key 為 null，則不要加前綴 (例如：shadow class)
+    $property-class-modifier: if(
+      $key,
+      if($property-class == '' and $infix == '', '', '-') + $key,
+      ''
+    );
+
+    @if $value != null {
+      // 檢查 utility 是否設定 `only-css-var: true`
+      @if map-get($utility, only-css-var) {
+        .#{$property-class + $infix + $property-class-modifier} {
+          --#{setting.$variable-prefix}#{$property-class}: #{$value};
+        }
+
+        @each $pseudo in $state {
+          .#{$property-class
+            + $infix
+            + $property-class-modifier}-#{$pseudo}:#{$pseudo} {
+            --#{setting.$variable-prefix}#{$property-class}: #{$value};
+          }
+        }
+      } @else {
+        .#{$property-class + $infix + $property-class-modifier} {
+          @each $property in $properties {
+            // 檢查 utility 是否設定 `local-vars` property，且是否為 map
+            $local-vars: map-get($utility, local-vars);
+            @if $local-vars and type-of($local-vars) == 'map' {
+              @each $local-var, $value in $local-vars {
+                --#{setting.$variable-prefix}#{$local-var}: #{$value};
+              }
+            }
+
+            // 檢查 utility 是否設定 `css-var` property
+            $css-vars: map-get($utility, css-var);
+            @if $css-vars {
+              @if $css-vars == true {
+                --#{setting.$variable-prefix}#{$property-class}: #{$value};
+              }
+              @if type-of($css-vars) == 'list' {
+                @each $css-var in $css-vars {
+                  --#{setting.$variable-prefix}#{$css-var}: #{$value};
+                }
+              }
+            }
+
+            #{$property}: $value useImportant();
+          }
+        }
+
+        @each $pseudo in $state {
+          .#{$property-class
+            + $infix
+            + $property-class-modifier}-#{$pseudo}:#{$pseudo} {
+            @each $property in $properties {
+              #{$property}: $value useImportant();
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@each $breakpoint in map-keys(breakpoint.$breakpoints) {
+  @include breakpoint.media($breakpoint) {
+    $infix: breakpoint.infix($breakpoint);
+
+    @each $key, $utility in setting.$utilities {
+      // utility 可用 `null` 禁用，所以先檢查 utility 是否為 map
+      // 只有在 `responsive: true` 或者它是 base media query 時才繼續
+      @if type-of($utility) ==
+        'map' and
+        (map-get($utility, responsive) or $infix == '')
+      {
+        @include generate-utility($utility, $infix);
+      }
+    }
+  }
+}
+
+@media print {
+  @each $key, $utility in setting.$utilities {
+    // utility 可用 `null` 禁用，所以先檢查 utility 是否為 map
+    // 然後再檢查 utility 是否設定 `print: true`
+    @if type-of($utility) == 'map' and map-get($utility, print) {
+      @include generate-utility($utility, '-print');
+    }
+  }
+}
